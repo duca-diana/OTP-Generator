@@ -1,0 +1,166 @@
+﻿@model TechnicalInterview.Models.UserModel
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-image: radial-gradient(#fc6c85, #EDAEC0, #e2dadb);
+            height: 100vh;
+        }
+
+        .text-info {
+            color: #fc6c85!important;
+        }
+        
+        #login .container #login-row #login-column #login-box {
+            margin-top: 150px;
+            height: 550px;
+            min-width:400px;
+            border-radius: 25px;
+            padding: 30px;
+            border: 5px solid #fc6c85;
+            background-color: #e2dadb;
+        }
+
+        #generateOTPButton {
+            background-color: #fc6c85;
+            border: #fc6c85;
+        }
+
+        
+
+        #timer {
+            display: block;
+        }
+
+        #login .container #login-row #login-column #login-box #login-form {
+            padding: 20px;
+        }
+
+            #login .container #login-row #login-column #login-box #login-form #register-link {
+                margin-top: -85px;
+            }
+    </style>
+
+    <script>
+        var timer = null;
+        var count = parseInt('@ViewBag.CountValue') || 30;
+
+        function generateOTP() {
+            var userId = document.getElementById('userId').value;
+            var dateAndTime = document.getElementById('dateAndTime').value;
+
+            // Generate OTP based on userId and dateAndTime
+            var url = '/CheckOTP/GenerateOTP?userId=' + encodeURIComponent(userId) + '&dateAndTime=' + encodeURIComponent(dateAndTime);
+
+            // Fetch the OTP value from the server
+            fetch(url)
+                .then(response => response.text())
+                .then(otp => {
+                    var otpField = document.getElementById('otp');
+                    otpField.value = otp;
+                    otpField.removeAttribute('readonly');
+
+                    startTimer();
+                });
+        }
+
+        function startTimer() {
+            if (timer !== null) return;
+
+            var counterElement = document.getElementById('counter');
+            counterElement.innerText = count.toString();
+
+            var timerElement = document.getElementById('timer');
+            timerElement.style.display = 'block';
+
+            timer = setInterval(function () {
+                count--;
+                counterElement.innerText = count.toString();
+                if (count <= 0) {
+                    clearInterval(timer);
+                    timerElement.style.display = 'none';
+                }
+            }, 1000);
+        }
+
+        //Function to get the current date and time
+        function getCurrentDateTime() {
+            var now = new Date();
+            var day = now.getDate().toString().padStart(2, '0');
+            var month = (now.getMonth() + 1).toString().padStart(2, '0'); 
+            var year = now.getFullYear();
+            var hours = now.getHours().toString().padStart(2, '0');
+            var minutes = now.getMinutes().toString().padStart(2, '0');
+            var seconds = now.getSeconds().toString().padStart(2, '0');
+
+            return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+        }
+
+        // Function to fill the Date and Time field with the current date and time
+        function fillDateTimeField() {
+            var dateAndTimeField = document.getElementById('dateAndTime');
+            dateAndTimeField.value = getCurrentDateTime();
+        }
+
+        // Attach the click event listener to the button after the document has finished loading
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('generateOTPButton').addEventListener('click', generateOTP);
+            fillDateTimeField(); 
+        });
+    </script>
+</head>
+<body>
+    <div id="login">
+        <div class="container">
+            <div id="login-row" class="row justify-content-center align-items-center">
+                <div id="login-column" class="col-md-6">
+                    <div id="login-box" class="col-md-12">
+                        <form action="/CheckOTP/Verify" method="post">
+                            <h3 class="text-center text-info">Check and Generate One Time Password</h3>
+                            <div class="form-group">
+                                <label for="userId" class="text-info">User ID:</label><br>
+                                <input type="text" class="form-control" id="userId" name="userId" placeholder="User Id" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="dateAndTime" class="text-info">Date and Time:</label><br>
+                                <input type="text" class="form-control" id="dateAndTime" name="dateAndTime" placeholder="DD/MM/YYYY HH:MM:SS" pattern="\d{2}/\d{2}/\d{4} \d{2}:\d{2}:\d{2}" title="Please enter a valid date and time (DD/MM/YYYY HH:MM:SS)" required>
+                            </div>
+                            <div class="form-group">
+                                <input type="button" id="generateOTPButton" class="btn btn-success btn-md" value="Generate OTP" onclick="generateOTP();">
+                            </div>
+                            <div class="form-group">
+                                <label for="otp" class="text-info">One Time Password:</label><br>
+                                <input type="text" class="form-control" id="otp" name="otp" placeholder="One Time Password" pattern=".{6}" title="Please enter a 6-digit OTP" required>
+                            </div>
+
+                            <div id="timer" style="display: none;">
+                                <p>Time Remaining: <span id="counter">30</span> seconds</p>
+                            </div>
+
+                            <input type="hidden" id="countValue" name="CountValue" value="@ViewBag.CountValue" />
+
+                            <div class="form-group">
+                                <input type="submit" id="generateOTPButton" name="submit" class="btn btn-info btn-md" value="Submit">
+                            </div>
+                        </form>
+                        <div style="color:red;">@ViewBag.Message</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
